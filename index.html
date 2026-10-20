@@ -588,7 +588,7 @@ const A = {
       ${ch !== null ? `<p class="muted small" style="text-align:center">${ch >= 0 ? 'ยกรวมได้มากกว่า' : 'ยกรวมได้น้อยกว่า'}ครั้งก่อนของโปรแกรมนี้ ${Math.abs(ch)}%</p>` : ''}
       <button class="btn primary section" data-a="closeSheet">ปิด</button>`);
   },
-  applySug: el => { S.active.items[el.dataset.i].sets.forEach(s => { if (!s.done) s.w = el.dataset.w; }); save(); render(); toast('ตั้งน้ำหนักใหม่แล้ว สู้ๆ!'); },
+  applySug: el => { S.active.items[el.dataset.i].sets.forEach(s => { if (!s.done) { s.w = el.dataset.w; s.r = '8'; } }); save(); render(); toast('ตั้งน้ำหนักใหม่แล้ว สู้ๆ!'); },
   plateCalc: () => {
     openSheet(`<h2>คำนวณจานน้ำหนัก</h2><p class="muted small">ใส่น้ำหนักรวมที่อยากยก แอปจะบอกว่าต้องใส่จานข้างละกี่แผ่น</p>
       <div class="row"><input class="input num" id="pcW" inputmode="decimal" placeholder="เช่น 60" style="font-size:20px">
