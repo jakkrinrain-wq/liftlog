@@ -201,6 +201,9 @@ select option{background:#15181D;color:var(--text)}
 #rest.full{background:rgba(7,9,12,.72);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px)}
 #rest:not(.full){backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
 .focus .demo,.cat{box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.m3d{height:320px;border-radius:16px;overflow:hidden;touch-action:pan-y;border:1px solid var(--glass-border);
+  background:radial-gradient(circle at 50% 35%,rgba(198,255,61,.14),rgba(124,92,255,.08) 45%,rgba(255,255,255,.03) 75%)}
+.m3d canvas{display:block;width:100%;height:100%;cursor:grab}
 /* หมวดหมู่ท่า */
 .cats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .cat{height:112px;border-radius:18px;background-size:cover;background-position:center;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;padding:12px 14px;color:#fff;border:1px solid rgba(255,255,255,.18);text-align:left}
@@ -538,7 +541,7 @@ function Focus() {
     <div class="muted small">ท่าที่ ${c.ii + 1}/${A.items.length} · <b style="color:var(--text)">เซ็ต ${c.si + 1} จาก ${it.sets.length}</b></div>
     <h1 style="margin-top:6px">${esc(e.name)}</h1>
     <div class="muted small">${th(e.name) ? esc(th(e.name)) + ' · ' : ''}${esc(e.muscle)}</div>
-    ${exLib(e) ? `<button style="display:block;width:170px;margin:12px auto 0" data-a="exInfo" data-lib="${exLib(e)}" data-id="${e.id}" aria-label="ดูวิธีเล่น">${demo(exLib(e))}<div class="small" style="color:var(--accent);margin-top:4px">แตะเพื่อดูวิธีเล่น</div></button>`
+    ${exLib(e) ? `<button style="display:block;width:170px;margin:12px auto 0" data-a="exInfo" data-lib="${exLib(e)}" data-id="${e.id}" aria-label="ดูวิธีเล่น">${demo(exLib(e))}<div class="small" style="color:var(--accent);margin-top:4px">แตะเพื่อดูวิธีเล่น${ANIM3D[exLib(e)] ? ' · มีหุ่น 3D' : ''}</div></button>`
       : `<a class="small" href="${howto(e.name)}" target="_blank" rel="noopener" style="color:var(--accent)">ดูวิธีเล่น ▶</a>`}
     ${it.bump ? `<div class="chip acc" style="margin:10px 0 0">⬆ เพิ่มน้ำหนักให้แล้ว เพราะครั้งก่อนทำได้ครบ</div>` : ''}
     <div class="muted small" style="margin-top:10px">ครั้งก่อน: ${prev ? `${prev.w} kg × ${prev.r} ครั้ง` : 'ยังไม่เคยเล่น ลองน้ำหนักเบาๆ ก่อน'}</div>
@@ -681,8 +684,8 @@ function render() {
 
 /* ============ Bottom sheet ============ */
 let sheetFor = null;
-function openSheet(html) { $('#sheet').innerHTML = `<div class="grab"></div>${html}`; $('#sheet').classList.add('on'); $('#scrim').classList.add('on'); }
-function closeSheet() { $('#sheet').classList.remove('on'); $('#scrim').classList.remove('on'); }
+function openSheet(html) { if (typeof stop3d === 'function') stop3d(); $('#sheet').innerHTML = `<div class="grab"></div>${html}`; $('#sheet').classList.add('on'); $('#scrim').classList.add('on'); }
+function closeSheet() { stop3d(); $('#sheet').classList.remove('on'); $('#scrim').classList.remove('on'); }
 
 let pickQ = '', pickM = '', pickE = '', pickN = 30, infoFromPicker = false;
 const CAT_IMG = { 'อก': 'Barbell_Bench_Press_-_Medium_Grip', 'หลัง': 'Wide-Grip_Lat_Pulldown', 'ขา': 'Barbell_Squat', 'ไหล่': 'Side_Lateral_Raise', 'แขน': 'Barbell_Curl', 'หน้าท้อง': 'Plank' };
@@ -725,14 +728,31 @@ function pickList() {
 // หน้ารายละเอียดท่า: ภาพสาธิตเคลื่อนไหว + วิธีเล่น
 function exInfoSheet(libId, exId) {
   const L = LIBX[libId], e = exId ? ex(exId) : null, name = e ? e.name : L ? L.n : '', tips = TIPS[libId];
+  const media = ANIM3D[libId]
+    ? `<div class="seg" style="margin-bottom:10px"><button class="on" data-a="mview" data-v="3d" data-lib="${libId}">หุ่น 3D</button><button data-a="mview" data-v="photo" data-lib="${libId}">รูปจริง</button></div>
+       <div id="mbox"><div class="m3d" id="m3d"><div class="empty">กำลังโหลดหุ่น 3D…</div></div>
+       <div class="muted small" style="text-align:center;margin-top:6px">ลากนิ้วเพื่อหมุนดูรอบตัว · <span style="color:var(--accent)">สีเขียว</span> = กล้ามที่ใช้</div></div>`
+    : libId ? demo(libId) : '';
   openSheet(`${infoFromPicker ? `<button class="link" style="padding:0 0 10px" data-a="backPicker">‹ กลับ</button>` : ''}
-    ${libId ? demo(libId) : ''}
+    ${media}
     <h2 style="margin-top:14px">${esc(name)}</h2>${th(name) ? `<div class="muted">${esc(th(name))}</div>` : ''}
     ${L ? `<div style="margin-top:10px">${L.p.map(p => `<span class="chip acc">${MUSCLE_TH[p] || p}</span>`).join('')}<span class="chip">${EQUIP_TH[L.e] || L.e}</span><span class="chip">${LEVEL_TH[L.l] || L.l}</span></div>` : ''}
     ${tips ? `<h3 style="margin-top:14px">วิธีเล่น</h3><ol class="steps">${tips.map(t => `<li>${esc(t)}</li>`).join('')}</ol>` : ''}
     ${L && L.s.length ? `<details ${tips ? '' : 'open'}><summary class="muted small">${tips ? 'คำอธิบายละเอียด (ภาษาอังกฤษ)' : 'วิธีเล่น (ภาษาอังกฤษ)'}</summary><ol class="steps small muted">${L.s.map(t => `<li>${esc(t)}</li>`).join('')}</ol></details>` : ''}
     <a class="link" style="display:block" href="${howto(name)}" target="_blank" rel="noopener">ดูคลิปสอนใน YouTube ▶</a>
     ${sheetFor ? `<button class="btn primary section" data-a="addLib" data-lib="${libId || ''}" data-id="${exId || ''}">${I.plus} เพิ่มท่านี้</button>` : `<button class="btn ghost section" data-a="closeSheet">ปิด</button>`}`);
+  if (ANIM3D[libId]) start3d(libId);
+}
+// หุ่น 3D (ตอนนี้มีท่าสควอท) — โหลดเฉพาะตอนเปิดดู
+const ANIM3D = { 'Barbell_Squat': 'squat' };
+let cur3d = null, tok3d = 0;
+function stop3d() { tok3d++; if (cur3d) { cur3d.dispose(); cur3d = null; } }
+function start3d(libId) {
+  stop3d(); const my = tok3d;
+  import('./mannequin.js').then(m => {
+    const el = $('#m3d'); if (!el || my !== tok3d) return;
+    el.innerHTML = ''; cur3d = m.mount(el, ANIM3D[libId]);
+  }).catch(() => { const el = $('#m3d'); if (el) el.innerHTML = '<div class="empty">โหลดหุ่น 3D ไม่สำเร็จ (ครั้งแรกต้องต่อเน็ต)</div>'; });
 }
 function ensureEx(libId) {
   const have = S.exercises.find(e => exLib(e) === libId); if (have) return have.id;
@@ -884,6 +904,11 @@ const A = {
   browseLib: () => { sheetFor = null; pickQ = ''; pickM = ''; pickE = ''; pickN = 30; openSheet(exercisePicker()); },
   pickMore: () => { pickN += 30; $('#exList').innerHTML = pickList(); },
   backPicker: () => openSheet(exercisePicker()),
+  mview: el => {
+    document.querySelectorAll('[data-a=mview]').forEach(b => b.classList.toggle('on', b === el));
+    if (el.dataset.v === 'photo') { stop3d(); $('#mbox').innerHTML = demo(el.dataset.lib); }
+    else { $('#mbox').innerHTML = `<div class="m3d" id="m3d"><div class="empty">กำลังโหลดหุ่น 3D…</div></div><div class="muted small" style="text-align:center;margin-top:6px">ลากนิ้วเพื่อหมุนดูรอบตัว · <span style="color:var(--accent)">สีเขียว</span> = กล้ามที่ใช้</div>`; start3d(el.dataset.lib); }
+  },
   exInfo: el => { infoFromPicker = !!el.closest('#sheet'); if (!infoFromPicker) sheetFor = null; exInfoSheet(el.dataset.lib, el.dataset.id); },
   addLib: el => { if (!el.dataset.id && !LIBX[el.dataset.lib]) return; const id = el.dataset.id || ensureEx(el.dataset.lib); addPicked(id); toast('เพิ่ม ' + ex(id).name + ' แล้ว'); },
   pickedEx: el => addPicked(el.dataset.id),
