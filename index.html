@@ -130,6 +130,7 @@ select:focus,.input:focus{outline:none;border-color:var(--accent)}
 .demo{position:relative;background:#fff;border-radius:14px;overflow:hidden;aspect-ratio:4/3}
 .demo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .demo img.b{animation:flip 2.2s ease-in-out infinite}
+.demo.gif{aspect-ratio:1/1;max-width:300px;margin:0 auto}
 @keyframes flip{0%,38%{opacity:0}50%,88%{opacity:1}100%{opacity:0}}
 .thumb{width:64px;height:48px;border-radius:8px;background:#fff;object-fit:cover;flex:none}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
@@ -273,17 +274,35 @@ const TH = {
 const th = name => TH[name] || '';
 const howto = name => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(name + ' วิธีเล่น ท่าที่ถูกต้อง');
 
-/* ============ คลังท่า + ภาพสาธิต (free-exercise-db, สาธารณสมบัติ) ============ */
+/* ============ คลังท่า + ภาพเคลื่อนไหวหุ่นกายวิภาค (ExerciseDB โดย AscendAPI — ใช้ส่วนตัว ต้องให้เครดิต) ============ */
+const GIF = id => `https://static.exercisedb.dev/media/${id}.gif`;
+// รูปจริงสำรอง (free-exercise-db) สำหรับท่าที่ ExerciseDB ฟรีไม่มี
 const IMG = id => `https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/${id}/`;
+// ประเภทอุปกรณ์ (ใช้ทั้งกรองและเรียงลำดับ)
+const eqCat = e => /machine/.test(e) ? 'machine' : /dumbbell/.test(e) ? 'dumbbell' : /barbell|EZ bar|trap bar/.test(e) ? 'barbell' : /cable|rope/.test(e) ? 'cable' : /bodyweight|assisted/.test(e) ? 'bodyweight' : 'other';
 let LIB = null, LIBX = {};
 fetch('lib.json').then(r => r.json()).then(d => {
-  // ท่าง่ายและอุปกรณ์ที่ยิมทั่วไปมี ขึ้นก่อน
-  const LV = { beginner: 0, intermediate: 1, expert: 2 }, EQ = ['machine', 'dumbbell', 'barbell', 'cable', 'body only', 'e-z curl bar'];
-  const rank = x => (LV[x.l] ?? 1) * 10 + (EQ.includes(x.e) ? EQ.indexOf(x.e) / 10 : 5);
-  LIB = d.sort((a, b) => rank(a) - rank(b) || a.n.localeCompare(b.n)); d.forEach(x => LIBX[x.i] = x);
+  // อุปกรณ์ที่ยิมทั่วไปมี และชื่อสั้น (ท่าพื้นฐาน) ขึ้นก่อน
+  const EQ = ['machine', 'dumbbell', 'barbell', 'cable', 'bodyweight', 'other'];
+  const rank = x => EQ.indexOf(eqCat(x.e)) + x.n.length / 100;
+  LIB = d.sort((a, b) => rank(a) - rank(b)); d.forEach(x => LIBX[x.i] = x);
+  Object.assign(LIBX, FALLBACK);
+  if (!$('#sheet').classList.contains('on') && !document.activeElement.matches('input')) render();
   const l = $('#exList'); if (l) l.innerHTML = pickList();
 }).catch(() => {});
-// จับคู่ท่าเดิมในแอปกับคลังท่า
+// จับคู่ท่าหลักในแอปกับ ExerciseDB
+const EDB_MAP = {
+  'Bench Press': 'EIeI8Vf', 'Incline Dumbbell Press': 'ns0SIbU', 'Chest Fly (เครื่อง)': 'v3xmPAR', 'Push-up': 'I4hDWkc', 'Leg Extension': 'my33uHU', 'Leg Curl': '17lJ1kr',
+  'Lat Pulldown': 'RVwzP10', 'Seated Cable Row': 'A3P4O0R', 'Deadlift': 'ila4NZS', 'Pull-up': 'lBDjFxJ', 'Bent-over Row': 'eZyBC3j',
+  'Squat': 'qXTaZnJ', 'Leg Press': '10Z2DXU', 'Romanian Deadlift': 'o6LqKKP', 'Calf Raise': '8ozhUIZ',
+  'Overhead Press': 'kTbSH9h', 'Lateral Raise': 'DsgkuIt', 'Barbell Curl': '25GPyDY', 'Hammer Curl': '2NpxjC1', 'Triceps Pushdown': '3ZflifB', 'Skull Crusher': 'h8LFzo9',
+  'Plank': 'VBAWRPG', 'Cable Crunch': 'CUmLRTA', 'Hanging Leg Raise': 'I3tsCnC',
+};
+// ท่าที่ไม่มีใน ExerciseDB ฟรี: ใช้รูปจริงแทน และบอกกล้ามที่ใช้เอง
+const FALLBACK = {
+  'Face_Pull': { i: 'Face_Pull', n: 'Face Pull', m: 'ไหล่', p: ['deltoids'], q: ['upper back', 'trapezius'], e: 'cable', s: [] },
+};
+// รหัสท่าในคลังเดิม (ใช้กับวิธีเล่นภาษาไทย และรูปสำรอง)
 const LIB_MAP = {
   'Bench Press': 'Barbell_Bench_Press_-_Medium_Grip', 'Incline Dumbbell Press': 'Incline_Dumbbell_Press', 'Chest Fly (เครื่อง)': 'Butterfly', 'Push-up': 'Pushups',
   'Lat Pulldown': 'Wide-Grip_Lat_Pulldown', 'Seated Cable Row': 'Seated_Cable_Rows', 'Deadlift': 'Barbell_Deadlift', 'Pull-up': 'Pullups', 'Bent-over Row': 'Bent_Over_Barbell_Row',
@@ -292,10 +311,19 @@ const LIB_MAP = {
   'Barbell Curl': 'Barbell_Curl', 'Hammer Curl': 'Hammer_Curls', 'Triceps Pushdown': 'Triceps_Pushdown', 'Skull Crusher': 'EZ-Bar_Skullcrusher',
   'Plank': 'Plank', 'Cable Crunch': 'Cable_Crunch', 'Hanging Leg Raise': 'Hanging_Leg_Raise',
 };
-const exLib = e => e.lib || LIB_MAP[e.name] || null;
-const MUSCLE_TH = { chest: 'อก', lats: 'ปีกหลัง', 'middle back': 'กลางหลัง', 'lower back': 'หลังล่าง', traps: 'บ่า', quadriceps: 'ต้นขาหน้า', hamstrings: 'ต้นขาหลัง', glutes: 'ก้น', calves: 'น่อง', adductors: 'ขาด้านใน', abductors: 'สะโพกด้านนอก', shoulders: 'ไหล่', neck: 'คอ', biceps: 'หน้าแขน', triceps: 'หลังแขน', forearms: 'แขนท่อนล่าง', abdominals: 'หน้าท้อง' };
-const EQUIP_TH = { barbell: 'บาร์เบล', dumbbell: 'ดัมเบล', cable: 'เคเบิล', machine: 'เครื่อง', 'body only': 'ไม่ใช้อุปกรณ์', kettlebells: 'เคตเทิลเบล', bands: 'ยางยืด', 'e-z curl bar': 'บาร์ EZ', 'medicine ball': 'เมดิซินบอล', 'exercise ball': 'บอลออกกำลังกาย', 'foam roll': 'โฟมโรล', other: 'อื่นๆ' };
-const LEVEL_TH = { beginner: 'มือใหม่', intermediate: 'ระดับกลาง', expert: 'ระดับสูง' };
+const OLD_IDS = new Set(Object.values(FALLBACK).map(x => x.i));
+// ท่าที่มีภาพเคลื่อนไหวใช้ ExerciseDB ก่อน ถ้าไม่มีใช้รูปจริงสำรอง (ท่าเก่าที่บันทึกด้วยรหัสคลังเดิมก็แปลงให้)
+const exLib = e => { const id = e.lib || EDB_MAP[e.name] || LIB_MAP[e.name] || null; return id && !LIBX[id] && OLD_TO_EDB[id] ? OLD_TO_EDB[id] : id; };
+const OLD_TO_EDB = Object.fromEntries(Object.keys(EDB_MAP).map(n => [LIB_MAP[n], EDB_MAP[n]]));
+const MUSCLE_TH = {
+  pectorals: 'อก', 'latissimus dorsi': 'ปีกหลัง', 'upper back': 'หลังส่วนบน', rhomboids: 'กลางหลัง', back: 'หลัง', 'erector spinae': 'หลังล่าง', trapezius: 'บ่า', 'levator scapulae': 'คอ-บ่า',
+  deltoids: 'ไหล่', 'rear deltoids': 'ไหล่หลัง', 'rotator cuff': 'ข้อไหล่', 'serratus anterior': 'ซี่โครงข้าง', sternocleidomastoid: 'คอ',
+  biceps: 'หน้าแขน', brachialis: 'ต้นแขน', triceps: 'หลังแขน', forearms: 'แขนท่อนล่าง', 'wrist flexors': 'ข้อมือ', 'wrist extensors': 'ข้อมือ', wrists: 'ข้อมือ', 'grip muscles': 'แรงบีบมือ', hands: 'มือ',
+  abdominals: 'หน้าท้อง', obliques: 'ท้องด้านข้าง', core: 'แกนกลางลำตัว', 'hip flexors': 'สะโพกด้านหน้า',
+  quadriceps: 'ต้นขาหน้า', hamstrings: 'ต้นขาหลัง', glutes: 'ก้น', adductors: 'ขาด้านใน', abductors: 'สะโพกด้านนอก',
+  calves: 'น่อง', soleus: 'น่อง', 'tibialis anterior': 'หน้าแข้ง', ankles: 'ข้อเท้า', 'ankle stabilizers': 'ข้อเท้า', feet: 'เท้า', 'cardiovascular system': 'หัวใจและปอด',
+};
+const EQUIP_TH = { barbell: 'บาร์เบล', dumbbell: 'ดัมเบล', cable: 'เคเบิล', 'leverage machine': 'เครื่อง', 'smith machine': 'สมิทแมชชีน', 'sled machine': 'เครื่องถีบ', bodyweight: 'ไม่ใช้อุปกรณ์', assisted: 'เครื่องช่วย', weighted: 'ถ่วงน้ำหนัก', kettlebell: 'เคตเทิลเบล', 'resistance band': 'ยางยืด', 'EZ bar': 'บาร์ EZ', 'stability ball': 'บอลออกกำลังกาย', 'medicine ball': 'เมดิซินบอล', rope: 'เชือก', roller: 'โรลเลอร์', 'trap bar': 'แทรปบาร์', 'olympic barbell': 'บาร์เบล', other: 'อื่นๆ' };
 // วิธีเล่นภาษาไทย (ท่าหลัก)
 const TIPS = {
   'Barbell_Bench_Press_-_Medium_Grip': ['นอนราบ เท้าวางพื้นแน่น บีบสะบักเข้าหากัน', 'ลดบาร์ลงแตะกลางอก ศอกทำมุมประมาณ 45° กับลำตัว', 'ดันขึ้นจนแขนตึง ก้นไม่ลอยจากม้านั่ง'],
@@ -324,11 +352,20 @@ const TIPS = {
   'Cable_Crunch': ['คุกเข่าหน้ารอก จับเชือกไว้ข้างหัว', 'ม้วนตัวลงด้วยหน้าท้อง ให้ศอกไปหาเข่า', 'กลับขึ้นช้าๆ สะโพกอยู่กับที่'],
   'Hanging_Leg_Raise': ['ห้อยตัวบนบาร์ แขนตรง', 'ยกขาขึ้นด้วยหน้าท้อง ไม่แกว่งตัว', 'ลดขาลงช้าๆ'],
 };
+// วิธีเล่นภาษาไทยใช้กับรหัส ExerciseDB ของท่าเดียวกันด้วย
+for (const n in EDB_MAP) if (TIPS[LIB_MAP[n]]) TIPS[EDB_MAP[n]] = TIPS[LIB_MAP[n]];
+
 /* ============ แผนที่กล้ามเนื้อหน้า-หลัง (react-native-body-highlighter, MIT) ============ */
 let BODY = null;
 fetch('body.json').then(r => r.json()).then(d => { BODY = d; if (!$('#sheet').classList.contains('on') && !document.activeElement.matches('input')) render(); }).catch(() => {});
 // ชื่อกล้ามจากคลังท่า → ชิ้นส่วนบนแผนที่
-const SLUG = { chest: ['chest'], lats: ['upper-back'], 'middle back': ['upper-back'], 'lower back': ['lower-back'], traps: ['trapezius'], quadriceps: ['quadriceps'], hamstrings: ['hamstring'], glutes: ['gluteal'], calves: ['calves'], adductors: ['adductors'], abductors: ['gluteal'], shoulders: ['deltoids'], neck: ['neck'], biceps: ['biceps'], triceps: ['triceps'], forearms: ['forearm'], abdominals: ['abs', 'obliques'] };
+const SLUG = {
+  pectorals: ['chest'], 'latissimus dorsi': ['upper-back'], 'upper back': ['upper-back'], rhomboids: ['upper-back'], back: ['upper-back', 'lower-back'], 'erector spinae': ['lower-back'], trapezius: ['trapezius'], 'levator scapulae': ['trapezius'],
+  deltoids: ['deltoids'], 'rear deltoids': ['deltoids'], 'rotator cuff': ['deltoids'], 'serratus anterior': ['obliques'], sternocleidomastoid: ['neck'],
+  biceps: ['biceps'], brachialis: ['biceps'], triceps: ['triceps'], forearms: ['forearm'], 'wrist flexors': ['forearm'], 'wrist extensors': ['forearm'], 'grip muscles': ['forearm'],
+  abdominals: ['abs'], obliques: ['obliques'], core: ['abs', 'obliques'], 'hip flexors': ['quadriceps'],
+  quadriceps: ['quadriceps'], hamstrings: ['hamstring'], glutes: ['gluteal'], adductors: ['adductors'], abductors: ['gluteal'], calves: ['calves'], soleus: ['calves'], 'tibialis anterior': ['tibialis'],
+};
 // กลุ่มกล้ามภาษาไทย → ชิ้นส่วน (ใช้กับท่าที่สร้างเอง)
 const GROUP_SLUG = { 'อก': ['chest'], 'หลัง': ['upper-back', 'lower-back', 'trapezius'], 'ขา': ['quadriceps', 'hamstring', 'gluteal', 'calves', 'adductors'], 'ไหล่': ['deltoids'], 'แขน': ['biceps', 'triceps', 'forearm'], 'หน้าท้อง': ['abs', 'obliques'] };
 const NOT_MUSCLE = new Set(['head', 'hair', 'hands', 'feet', 'ankles', 'knees']);
@@ -355,8 +392,11 @@ function recoveryColors() {
   for (const s in last) { const pct = (Date.now() - last[s]) / 36e5 / 72; c[s] = pct >= 1 ? '#C6FF3D' : pct >= 0.5 ? '#FFD23F' : '#FF6B35'; }
   return c;
 }
-const demo = id => `<div class="demo"><img src="${IMG(id)}0.jpg" alt="จังหวะเริ่ม" loading="lazy"><img class="b" src="${IMG(id)}1.jpg" alt="จังหวะจบ" loading="lazy"></div>`;
-const thumb = id => id ? `<img class="thumb" src="${IMG(id)}0.jpg" alt="" loading="lazy">` : `<div class="thumb" style="background:var(--surface2)"></div>`;
+const demo = id => OLD_IDS.has(id)
+  ? `<div class="demo"><img src="${IMG(id)}0.jpg" alt="จังหวะเริ่ม" loading="lazy"><img class="b" src="${IMG(id)}1.jpg" alt="จังหวะจบ" loading="lazy"></div>`
+  : `<div class="demo gif"><img src="${GIF(id)}" alt="ภาพเคลื่อนไหวสาธิตท่า" loading="lazy"></div>`;
+const thumb = id => !id ? `<div class="thumb" style="background:var(--surface2)"></div>`
+  : `<img class="thumb" src="${OLD_IDS.has(id) ? IMG(id) + '0.jpg' : GIF(id)}" alt="" loading="lazy">`;
 function load() {
   try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.version) return d; } catch (e) {}
   return seed();
@@ -685,7 +725,7 @@ function Progress() {
 function Plan() {
   const weekly = S.planMode === 'weekly', nt = nextTpl();
   return `<h1>โปรแกรม</h1>
-  <button class="card row" style="width:100%;text-align:left;margin-top:16px" data-a="browseLib">${thumb('Barbell_Squat')}<span class="grow"><h3>คลังท่า</h3><span class="muted small">${LIB ? LIB.length : 654} ท่า แบ่งตามกล้ามเนื้อ พร้อมภาพสาธิตและวิธีเล่น</span></span><span style="color:var(--accent);font-size:22px">›</span></button>
+  <button class="card row" style="width:100%;text-align:left;margin-top:16px" data-a="browseLib">${thumb('qXTaZnJ')}<span class="grow"><h3>คลังท่า</h3><span class="muted small">${LIB ? LIB.length : 1398} ท่า แบ่งตามกล้ามเนื้อ พร้อมหุ่นสาธิตท่าเคลื่อนไหว</span></span><span style="color:var(--accent);font-size:22px">›</span></button>
   <div class="section" style="margin-top:20px"><div class="seg"><button class="${!weekly ? 'on' : ''}" data-a="planMode" data-m="rotation">วนตามลำดับ</button><button class="${weekly ? 'on' : ''}" data-a="planMode" data-m="weekly">ตามวันในสัปดาห์</button></div>
     <p class="muted small" style="margin:8px 2px 0">${weekly ? 'ผูกโปรแกรมกับวัน ถ้าวันไหนไม่ได้ไป โปรแกรมของวันนั้นจะถูกข้าม' : 'เล่นเรียงตามลำดับด้านล่างแล้ววนกลับ เว้นไปกี่วันก็ได้ แอปจำเองว่าครั้งต่อไปคืออะไร (แนะนำ)'}</p></div>
   ${weekly ? `<div class="section"><div class="section-title"><h2>ตารางรายสัปดาห์</h2></div>
@@ -725,8 +765,8 @@ function openSheet(html) { $('#sheet').innerHTML = `<div class="grab"></div>${ht
 function closeSheet() { $('#sheet').classList.remove('on'); $('#scrim').classList.remove('on'); }
 
 let pickQ = '', pickM = '', pickE = '', pickN = 30, infoFromPicker = false;
-const CAT_IMG = { 'อก': 'Barbell_Bench_Press_-_Medium_Grip', 'หลัง': 'Wide-Grip_Lat_Pulldown', 'ขา': 'Barbell_Squat', 'ไหล่': 'Side_Lateral_Raise', 'แขน': 'Barbell_Curl', 'หน้าท้อง': 'Plank' };
-const EQ_FILTER = [['', 'ทุกอุปกรณ์'], ['machine', 'เครื่อง'], ['dumbbell', 'ดัมเบล'], ['barbell', 'บาร์เบล'], ['cable', 'เคเบิล'], ['body only', 'ไม่ใช้อุปกรณ์']];
+const CAT_IMG = { 'อก': 'EIeI8Vf', 'หลัง': 'RVwzP10', 'ขา': 'qXTaZnJ', 'ไหล่': 'DsgkuIt', 'แขน': '25GPyDY', 'หน้าท้อง': 'CUmLRTA' };
+const EQ_FILTER = [['', 'ทุกอุปกรณ์'], ['machine', 'เครื่อง'], ['dumbbell', 'ดัมเบล'], ['barbell', 'บาร์เบล'], ['cable', 'เคเบิล'], ['bodyweight', 'ไม่ใช้อุปกรณ์']];
 function exercisePicker() {
   return `<div class="row between"><h2>${pickM ? `<button class="link" style="padding:0 8px 0 0;font-size:inherit" data-a="pickM" data-m="" aria-label="กลับไปหมวดทั้งหมด">‹</button>ท่า${pickM}` : sheetFor ? 'เลือกท่า' : 'คลังท่า'}</h2>
       ${!sheetFor ? `<button class="icon-btn" data-a="closeSheet" aria-label="ปิด">${I.x}</button>` : ''}</div>
@@ -751,13 +791,13 @@ function pickList() {
     return `<div class="cats">${MUSCLES.map(m => `<button class="cat" data-a="pickM" data-m="${m}" style="background-image:linear-gradient(180deg,rgba(0,0,0,.05) 25%,rgba(0,0,0,.78)),url('${IMG(CAT_IMG[m])}0.jpg')"><b>${m}</b><span>${LIB ? n(m) + ' ท่า' : '&nbsp;'}</span></button>`).join('')}</div>`
       + (sheetFor && S.exercises.length ? `<div class="muscle-h section">ท่าของฉัน</div>` + S.exercises.map(e => prow(exLib(e), e.id, e.name, th(e.name) || e.muscle)).join('') : '');
   }
-  const eqOk = x => !pickE || x === pickE;
+  const eqOk = x => !pickE || eqCat(x) === pickE;
   const mine = S.exercises.filter(e => (!pickM || e.muscle === pickM) && hit(e.name, e.muscle) && (!pickE || (LIBX[exLib(e)] && eqOk(LIBX[exLib(e)].e))));
   const have = new Set(S.exercises.map(exLib).filter(Boolean));
   let out = mine.length ? `<div class="muscle-h">ท่าของฉัน</div>` + mine.map(e => prow(exLib(e), e.id, e.name, th(e.name) || e.muscle)).join('') : '';
   if (!LIB) return out + `<div class="empty">กำลังโหลดคลังท่า… (ครั้งแรกต้องต่อเน็ต)</div>`;
   const res = LIB.filter(x => !have.has(x.i) && (!pickM || x.m === pickM) && eqOk(x.e) && hit(x.n, `${x.m} ${x.p.map(p => MUSCLE_TH[p] || p).join(' ')} ${EQUIP_TH[x.e] || x.e} ${x.e}`));
-  out += `<div class="muscle-h">คลังท่า · ${res.length} ท่า</div>` + res.slice(0, pickN).map(x => prow(x.i, '', x.n, `${x.p.map(p => MUSCLE_TH[p] || p).join(', ')} · ${EQUIP_TH[x.e] || x.e} · ${LEVEL_TH[x.l] || ''}`)).join('');
+  out += `<div class="muscle-h">คลังท่า · ${res.length} ท่า</div>` + res.slice(0, pickN).map(x => prow(x.i, '', x.n, `${x.p.map(p => MUSCLE_TH[p] || p).join(', ')} · ${EQUIP_TH[x.e] || x.e}`)).join('');
   if (res.length > pickN) out += `<button class="btn ghost section" data-a="pickMore">แสดงเพิ่ม (${res.length - pickN})</button>`;
   if (!mine.length && !res.length) out += `<div class="empty">ไม่พบท่านี้ — สร้างเองด้านล่างได้เลย</div>`;
   return out;
@@ -772,10 +812,11 @@ function exInfoSheet(libId, exId) {
         <div><i class="dot" style="background:var(--accent)"></i>หลัก: ${L.p.map(p => MUSCLE_TH[p] || p).join(', ')}</div>
         ${(L.q || []).length ? `<div style="margin-top:4px"><i class="dot" style="background:#6E8A2A"></i>รอง: ${L.q.map(p => MUSCLE_TH[p] || p).join(', ')}</div>` : ''}</div></div>` : ''}
     <h2 style="margin-top:14px">${esc(name)}</h2>${th(name) ? `<div class="muted">${esc(th(name))}</div>` : ''}
-    ${L ? `<div style="margin-top:10px">${L.p.map(p => `<span class="chip acc">${MUSCLE_TH[p] || p}</span>`).join('')}<span class="chip">${EQUIP_TH[L.e] || L.e}</span><span class="chip">${LEVEL_TH[L.l] || L.l}</span></div>` : ''}
+    ${L ? `<div style="margin-top:10px">${L.p.map(p => `<span class="chip acc">${MUSCLE_TH[p] || p}</span>`).join('')}<span class="chip">${EQUIP_TH[L.e] || L.e}</span></div>` : ''}
     ${tips ? `<h3 style="margin-top:14px">วิธีเล่น</h3><ol class="steps">${tips.map(t => `<li>${esc(t)}</li>`).join('')}</ol>` : ''}
     ${L && L.s.length ? `<details ${tips ? '' : 'open'}><summary class="muted small">${tips ? 'คำอธิบายละเอียด (ภาษาอังกฤษ)' : 'วิธีเล่น (ภาษาอังกฤษ)'}</summary><ol class="steps small muted">${L.s.map(t => `<li>${esc(t)}</li>`).join('')}</ol></details>` : ''}
     <a class="link" style="display:block" href="${howto(name)}" target="_blank" rel="noopener">ดูคลิปสอนใน YouTube ▶</a>
+    <p class="muted" style="font-size:12px;margin:4px 0 0">${OLD_IDS.has(libId) ? 'รูปจาก free-exercise-db' : 'ภาพเคลื่อนไหวจาก ExerciseDB โดย AscendAPI'}</p>
     ${sheetFor ? `<button class="btn primary section" data-a="addLib" data-lib="${libId || ''}" data-id="${exId || ''}">${I.plus} เพิ่มท่านี้</button>` : `<button class="btn ghost section" data-a="closeSheet">ปิด</button>`}`);
 }
 function ensureEx(libId) {
