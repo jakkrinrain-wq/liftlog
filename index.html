@@ -173,6 +173,39 @@ details summary{cursor:pointer;padding:8px 0}
 .tip b{color:var(--accent);font-weight:600}
 .tip button{flex:none;height:34px;padding:0 12px;border-radius:8px;background:var(--accent);color:var(--accent-ink);font-family:var(--head);font-weight:600;font-size:14px}
 .warn{background:#2A1A10;border:1px solid #5A3216;color:#FFB48F;border-radius:14px;padding:12px 14px;font-size:14px}
+/* ============ ธีมกระจก (Glassmorphism) ============ */
+:root{
+  --bg:#07090C; --surface:rgba(255,255,255,.06); --surface2:rgba(255,255,255,.09); --line:rgba(255,255,255,.10);
+  --glass-border:rgba(255,255,255,.12); --blur:blur(22px) saturate(160%);
+}
+body{background:transparent}
+/* แสงสีด้านหลัง ให้กระจกมีอะไรให้เบลอ */
+body::before{content:"";position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(420px circle at 12% 6%, rgba(198,255,61,.28), transparent 65%),
+    radial-gradient(380px circle at 95% 32%, rgba(124,92,255,.30), transparent 65%),
+    radial-gradient(420px circle at 0% 78%, rgba(255,107,53,.22), transparent 65%),
+    radial-gradient(360px circle at 85% 100%, rgba(0,200,255,.18), transparent 65%), var(--bg)}
+.card,.stat,.ex-card,.focus,.rc,.seg,.icon-btn,.btn.ghost,.wk-head,.nav,#sheet,.stepper button{
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:1px solid var(--glass-border);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10), 0 8px 32px rgba(0,0,0,.25)}
+.wk-head{background:rgba(7,9,12,.55);border-width:0 0 1px}
+.nav{background:rgba(12,14,18,.55);border-width:1px 0 0;box-shadow:none}
+#sheet{background:rgba(18,21,27,.78);border-width:1px 1px 0}
+.card.hero{background:linear-gradient(135deg,rgba(198,255,61,.20),rgba(255,255,255,.05) 60%);border-color:rgba(198,255,61,.30)}
+.btn.primary{box-shadow:0 8px 28px rgba(198,255,61,.30), inset 0 1px 0 rgba(255,255,255,.5)}
+.seg button.on{background:rgba(255,255,255,.14)}
+.sets input,select,.input{background:rgba(255,255,255,.07);border-color:var(--glass-border)}
+select option{background:#15181D;color:var(--text)}
+#rest.full{background:rgba(7,9,12,.72);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px)}
+#rest:not(.full){backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)}
+.focus .demo,.cat{box-shadow:0 8px 24px rgba(0,0,0,.35)}
+/* หมวดหมู่ท่า */
+.cats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.cat{height:112px;border-radius:18px;background-size:cover;background-position:center;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;padding:12px 14px;color:#fff;border:1px solid rgba(255,255,255,.18);text-align:left}
+.cat b{font-family:var(--head);font-size:22px;line-height:1.1}
+.cat span{font-size:13px;opacity:.9}
 </style>
 </head>
 <body>
@@ -612,7 +645,8 @@ function Progress() {
 function Plan() {
   const weekly = S.planMode === 'weekly', nt = nextTpl();
   return `<h1>โปรแกรม</h1>
-  <div class="section" style="margin-top:16px"><div class="seg"><button class="${!weekly ? 'on' : ''}" data-a="planMode" data-m="rotation">วนตามลำดับ</button><button class="${weekly ? 'on' : ''}" data-a="planMode" data-m="weekly">ตามวันในสัปดาห์</button></div>
+  <button class="card row" style="width:100%;text-align:left;margin-top:16px" data-a="browseLib">${thumb('Barbell_Squat')}<span class="grow"><h3>คลังท่า</h3><span class="muted small">${LIB ? LIB.length : 654} ท่า แบ่งตามกล้ามเนื้อ พร้อมภาพสาธิตและวิธีเล่น</span></span><span style="color:var(--accent);font-size:22px">›</span></button>
+  <div class="section" style="margin-top:20px"><div class="seg"><button class="${!weekly ? 'on' : ''}" data-a="planMode" data-m="rotation">วนตามลำดับ</button><button class="${weekly ? 'on' : ''}" data-a="planMode" data-m="weekly">ตามวันในสัปดาห์</button></div>
     <p class="muted small" style="margin:8px 2px 0">${weekly ? 'ผูกโปรแกรมกับวัน ถ้าวันไหนไม่ได้ไป โปรแกรมของวันนั้นจะถูกข้าม' : 'เล่นเรียงตามลำดับด้านล่างแล้ววนกลับ เว้นไปกี่วันก็ได้ แอปจำเองว่าครั้งต่อไปคืออะไร (แนะนำ)'}</p></div>
   ${weekly ? `<div class="section"><div class="section-title"><h2>ตารางรายสัปดาห์</h2></div>
     <div class="card" style="padding:4px 16px">${DAYS.map((d, i) => `
@@ -650,29 +684,39 @@ let sheetFor = null;
 function openSheet(html) { $('#sheet').innerHTML = `<div class="grab"></div>${html}`; $('#sheet').classList.add('on'); $('#scrim').classList.add('on'); }
 function closeSheet() { $('#sheet').classList.remove('on'); $('#scrim').classList.remove('on'); }
 
-let pickQ = '', pickM = '', pickN = 30;
+let pickQ = '', pickM = '', pickE = '', pickN = 30, infoFromPicker = false;
+const CAT_IMG = { 'อก': 'Barbell_Bench_Press_-_Medium_Grip', 'หลัง': 'Wide-Grip_Lat_Pulldown', 'ขา': 'Barbell_Squat', 'ไหล่': 'Side_Lateral_Raise', 'แขน': 'Barbell_Curl', 'หน้าท้อง': 'Plank' };
+const EQ_FILTER = [['', 'ทุกอุปกรณ์'], ['machine', 'เครื่อง'], ['dumbbell', 'ดัมเบล'], ['barbell', 'บาร์เบล'], ['cable', 'เคเบิล'], ['body only', 'ไม่ใช้อุปกรณ์']];
 function exercisePicker() {
-  return `<h2>เลือกท่า</h2>
+  return `<div class="row between"><h2>${pickM ? `<button class="link" style="padding:0 8px 0 0;font-size:inherit" data-a="pickM" data-m="" aria-label="กลับไปหมวดทั้งหมด">‹</button>ท่า${pickM}` : sheetFor ? 'เลือกท่า' : 'คลังท่า'}</h2>
+      ${!sheetFor ? `<button class="icon-btn" data-a="closeSheet" aria-label="ปิด">${I.x}</button>` : ''}</div>
     <input class="input" style="margin-top:14px" id="exSearch" placeholder="ค้นหา เช่น bench, squat, หน้าแขน, ดัมเบล" value="${esc(pickQ)}">
-    <div class="chips" style="margin-top:10px">${['', ...MUSCLES].map(m => `<button class="${pickM === m ? 'on' : ''}" data-a="pickM" data-m="${m}">${m || 'ทั้งหมด'}</button>`).join('')}</div>
-    <p class="muted small" style="margin:6px 0 0">แตะที่ท่าเพื่อดูภาพสาธิตและวิธีเล่น · กด + เพื่อเพิ่มเลย</p>
+    ${pickM ? `<div class="chips" style="margin-top:10px">${EQ_FILTER.map(([k, l]) => `<button class="${pickE === k ? 'on' : ''}" data-a="pickE" data-e="${k}">${l}</button>`).join('')}</div>
+      <p class="muted small" style="margin:6px 0 0">แตะที่ท่าเพื่อดูภาพสาธิตและวิธีเล่น${sheetFor ? ' · กด + เพื่อเพิ่มเลย' : ''}</p>` : ''}
     <div id="exList">${pickList()}</div>
-    <div class="card section stack" style="background:var(--surface2)"><h3>ไม่เจอท่าที่ต้องการ? สร้างเอง</h3>
+    ${sheetFor ? `<div class="card section stack" style="background:var(--surface2)"><h3>ไม่เจอท่าที่ต้องการ? สร้างเอง</h3>
       <input class="input" id="newExName" placeholder="ชื่อท่า" value="${esc(pickQ)}" style="background:var(--surface)">
       <select id="newExMuscle" style="background:var(--surface)">${MUSCLES.map(m => `<option>${m}</option>`).join('')}</select>
-      <button class="btn primary" data-a="createEx">สร้างและเพิ่ม</button></div>`;
+      <button class="btn primary" data-a="createEx">สร้างและเพิ่ม</button></div>` : ''}`;
 }
 
 function pickList() {
   const q = pickQ.trim().toLowerCase();
   const hit = (name, extra) => !q || name.toLowerCase().includes(q) || th(name).includes(q) || extra.toLowerCase().includes(q);
   const prow = (libId, exId, name, sub) => `<div class="prow"><button class="info" data-a="exInfo" data-lib="${libId || ''}" data-id="${exId}">${thumb(libId)}<span class="grow">${esc(name)}<br><span class="muted small">${esc(sub)}</span></span></button>
-    <button class="add" data-a="addLib" data-lib="${libId || ''}" data-id="${exId}" aria-label="เพิ่ม ${esc(name)}">${I.plus}</button></div>`;
-  const mine = S.exercises.filter(e => (!pickM || e.muscle === pickM) && hit(e.name, e.muscle));
+    ${sheetFor ? `<button class="add" data-a="addLib" data-lib="${libId || ''}" data-id="${exId}" aria-label="เพิ่ม ${esc(name)}">${I.plus}</button>` : ''}</div>`;
+  // หน้าแรกของคลัง: การ์ดหมวดกล้ามเนื้อ
+  if (!pickM && !q) {
+    const n = m => (LIB ? LIB.filter(x => x.m === m).length : 0) + S.exercises.filter(e => e.muscle === m && !exLib(e)).length;
+    return `<div class="cats">${MUSCLES.map(m => `<button class="cat" data-a="pickM" data-m="${m}" style="background-image:linear-gradient(180deg,rgba(0,0,0,.05) 25%,rgba(0,0,0,.78)),url('${IMG(CAT_IMG[m])}0.jpg')"><b>${m}</b><span>${LIB ? n(m) + ' ท่า' : '&nbsp;'}</span></button>`).join('')}</div>`
+      + (sheetFor && S.exercises.length ? `<div class="muscle-h section">ท่าของฉัน</div>` + S.exercises.map(e => prow(exLib(e), e.id, e.name, th(e.name) || e.muscle)).join('') : '');
+  }
+  const eqOk = x => !pickE || x === pickE;
+  const mine = S.exercises.filter(e => (!pickM || e.muscle === pickM) && hit(e.name, e.muscle) && (!pickE || (LIBX[exLib(e)] && eqOk(LIBX[exLib(e)].e))));
   const have = new Set(S.exercises.map(exLib).filter(Boolean));
   let out = mine.length ? `<div class="muscle-h">ท่าของฉัน</div>` + mine.map(e => prow(exLib(e), e.id, e.name, th(e.name) || e.muscle)).join('') : '';
   if (!LIB) return out + `<div class="empty">กำลังโหลดคลังท่า… (ครั้งแรกต้องต่อเน็ต)</div>`;
-  const res = LIB.filter(x => !have.has(x.i) && (!pickM || x.m === pickM) && hit(x.n, `${x.m} ${x.p.map(p => MUSCLE_TH[p] || p).join(' ')} ${EQUIP_TH[x.e] || x.e} ${x.e}`));
+  const res = LIB.filter(x => !have.has(x.i) && (!pickM || x.m === pickM) && eqOk(x.e) && hit(x.n, `${x.m} ${x.p.map(p => MUSCLE_TH[p] || p).join(' ')} ${EQUIP_TH[x.e] || x.e} ${x.e}`));
   out += `<div class="muscle-h">คลังท่า · ${res.length} ท่า</div>` + res.slice(0, pickN).map(x => prow(x.i, '', x.n, `${x.p.map(p => MUSCLE_TH[p] || p).join(', ')} · ${EQUIP_TH[x.e] || x.e} · ${LEVEL_TH[x.l] || ''}`)).join('');
   if (res.length > pickN) out += `<button class="btn ghost section" data-a="pickMore">แสดงเพิ่ม (${res.length - pickN})</button>`;
   if (!mine.length && !res.length) out += `<div class="empty">ไม่พบท่านี้ — สร้างเองด้านล่างได้เลย</div>`;
@@ -681,7 +725,7 @@ function pickList() {
 // หน้ารายละเอียดท่า: ภาพสาธิตเคลื่อนไหว + วิธีเล่น
 function exInfoSheet(libId, exId) {
   const L = LIBX[libId], e = exId ? ex(exId) : null, name = e ? e.name : L ? L.n : '', tips = TIPS[libId];
-  openSheet(`${sheetFor ? `<button class="link" style="padding:0 0 10px" data-a="backPicker">‹ กลับไปเลือกท่า</button>` : ''}
+  openSheet(`${infoFromPicker ? `<button class="link" style="padding:0 0 10px" data-a="backPicker">‹ กลับ</button>` : ''}
     ${libId ? demo(libId) : ''}
     <h2 style="margin-top:14px">${esc(name)}</h2>${th(name) ? `<div class="muted">${esc(th(name))}</div>` : ''}
     ${L ? `<div style="margin-top:10px">${L.p.map(p => `<span class="chip acc">${MUSCLE_TH[p] || p}</span>`).join('')}<span class="chip">${EQUIP_TH[L.e] || L.e}</span><span class="chip">${LEVEL_TH[L.l] || L.l}</span></div>` : ''}
@@ -835,10 +879,12 @@ const A = {
   restStop: () => { restEnd = 0; tick(); },
 
   pickEx: el => { sheetFor = el.dataset.for; pickQ = ''; pickM = ''; pickN = 30; openSheet(exercisePicker()); },
-  pickM: el => { pickM = el.dataset.m; pickN = 30; openSheet(exercisePicker()); },
+  pickM: el => { pickM = el.dataset.m; pickE = ''; pickQ = ''; pickN = 30; openSheet(exercisePicker()); $('#sheet').scrollTop = 0; },
+  pickE: el => { pickE = el.dataset.e; pickN = 30; $('#exList').innerHTML = pickList(); document.querySelectorAll('[data-a=pickE]').forEach(b => b.classList.toggle('on', b.dataset.e === pickE)); },
+  browseLib: () => { sheetFor = null; pickQ = ''; pickM = ''; pickE = ''; pickN = 30; openSheet(exercisePicker()); },
   pickMore: () => { pickN += 30; $('#exList').innerHTML = pickList(); },
   backPicker: () => openSheet(exercisePicker()),
-  exInfo: el => { if (!el.closest('#sheet')) sheetFor = null; exInfoSheet(el.dataset.lib, el.dataset.id); },
+  exInfo: el => { infoFromPicker = !!el.closest('#sheet'); if (!infoFromPicker) sheetFor = null; exInfoSheet(el.dataset.lib, el.dataset.id); },
   addLib: el => { if (!el.dataset.id && !LIBX[el.dataset.lib]) return; const id = el.dataset.id || ensureEx(el.dataset.lib); addPicked(id); toast('เพิ่ม ' + ex(id).name + ' แล้ว'); },
   pickedEx: el => addPicked(el.dataset.id),
   createEx: () => {
