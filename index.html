@@ -396,15 +396,15 @@ function recoveryColors() {
   for (const s in last) { const pct = (Date.now() - last[s]) / 36e5 / 72; c[s] = pct >= 1 ? '#C6FF3D' : pct >= 0.5 ? '#FFD23F' : '#FF6B35'; }
   return c;
 }
-// ท่าหลักที่แปลงเป็นวิดีโอชัด (AI ขยาย 4 เท่า + เฟรมแทรก 30fps + ช่วงเคลื่อนไหวช้าลง) เก็บในแอป ใช้แบบออฟไลน์ได้
+// ท่าหลักที่แปลงเป็นวิดีโอชัด (AI ขยาย 4 เท่า · ค้างท่าเริ่ม/จบท่าละ 1 วิ สลับด้วยเฟดสั้น) เก็บในแอป ใช้แบบออฟไลน์ได้
 const HD = new Set(['EIeI8Vf', 'ns0SIbU', 'v3xmPAR', 'I4hDWkc', 'my33uHU', '17lJ1kr', 'RVwzP10', 'fUBheHs', 'ila4NZS', 'lBDjFxJ', 'eZyBC3j', 'qXTaZnJ', '10Z2DXU', 'wQ2c4XD', '8ozhUIZ', 'kTbSH9h', 'DsgkuIt', '25GPyDY', '2NpxjC1', '3ZflifB', 'h8LFzo9', 'VBAWRPG', 'WW95auq', 'I3tsCnC']);
 const demo = id => OLD_IDS.has(id)
   ? `<div class="demo"><img src="${IMG(id)}0.jpg" alt="จังหวะเริ่ม" loading="lazy"><img class="b" src="${IMG(id)}1.jpg" alt="จังหวะจบ" loading="lazy"></div>`
   : HD.has(id) ? `<div class="demo gif"><video src="demos/${id}.mp4" autoplay muted loop playsinline preload="auto" aria-label="วิดีโอสาธิตท่า"></video></div>`
   : `<div class="demo gif"><img src="${GIF(id)}" alt="ภาพเคลื่อนไหวสาธิตท่า" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'empty',textContent:'ไม่มีภาพสาธิตท่านี้'}))"></div>`;
 // ความเร็ววิดีโอสาธิต (จำค่าที่เลือกไว้)
-const SPEEDS = [[1, 'ช้า'], [1.3, 'ปกติ'], [1.6, 'เร็ว']];
-const demoSpeed = () => SPEEDS.some(([s]) => s === S.demoSpeed) ? S.demoSpeed : 1.3;
+const SPEEDS = [[0.75, 'ช้า'], [1, 'ปกติ'], [1.3, 'เร็ว']];
+const demoSpeed = () => SPEEDS.some(([s]) => s === S.demoSpeed) ? S.demoSpeed : 1;
 function applySpeed() { document.querySelectorAll('.demo video').forEach(v => { v.defaultPlaybackRate = v.playbackRate = demoSpeed(); }); }
 const thumb = id => !id ? `<div class="thumb" style="background:var(--surface2)"></div>`
   : `<img class="thumb" src="${OLD_IDS.has(id) ? IMG(id) + '0.jpg' : GIF(id)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`;

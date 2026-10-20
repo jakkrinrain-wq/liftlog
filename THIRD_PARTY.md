@@ -44,4 +44,4 @@ SOFTWARE.
 
 ## วิดีโอสาธิตท่าหลัก — `demos/*.mp4` (24 ไฟล์)
 - แปลงจากภาพ GIF ของ ExerciseDB (เงื่อนไขเดียวกับด้านบน: ใช้ส่วนตัวเท่านั้น ต้องให้เครดิต AscendAPI)
-- วิธีแปลง: ขยาย 4 เท่าด้วย [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) (โมเดล x4plus-anime) → ยืดช่วงเคลื่อนไหว 3.5 เท่า → สร้างเฟรมแทรกเป็น 30fps ด้วย ffmpeg (minterpolate) → MP4 640×640
+- วิธีแปลง: เลือกเฉพาะ 2 ท่าที่ GIF ค้างไว้ (ท่าเริ่ม/ท่าจบ) → ขยาย 4 เท่าด้วย [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) (โมเดล x4plus-anime) → ค้างท่าละ 1 วินาที สลับด้วยเฟด 0.3 วินาที → MP4 640×640

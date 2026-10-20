@@ -1,5 +1,5 @@
 // ทำให้แอปเปิดได้แม้ไม่มีเน็ต (เก็บไฟล์แอปไว้ในเครื่อง)
-const CACHE = 'liftlog-v10';
+const CACHE = 'liftlog-v11';
 // วิดีโอสาธิตท่าหลัก 24 ท่า เก็บไว้ในเครื่องตั้งแต่ติดตั้ง ใช้ในยิมได้แม้ไม่มีเน็ต
 const DEMOS = ['EIeI8Vf', 'ns0SIbU', 'v3xmPAR', 'I4hDWkc', 'my33uHU', '17lJ1kr', 'RVwzP10', 'fUBheHs', 'ila4NZS', 'lBDjFxJ', 'eZyBC3j', 'qXTaZnJ', '10Z2DXU', 'wQ2c4XD', '8ozhUIZ', 'kTbSH9h', 'DsgkuIt', '25GPyDY', '2NpxjC1', '3ZflifB', 'h8LFzo9', 'VBAWRPG', 'WW95auq', 'I3tsCnC'].map(id => `demos/${id}.mp4`);
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'lib.json', 'body.json', ...DEMOS];
