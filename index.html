@@ -124,6 +124,32 @@ select:focus,.input:focus{outline:none;border-color:var(--accent)}
 #toast{position:fixed;top:calc(16px + env(safe-area-inset-top));left:50%;transform:translate(-50%,-120px);z-index:40;background:var(--text);color:var(--bg);padding:12px 18px;border-radius:12px;font-family:var(--head);font-weight:500;transition:transform .3s;max-width:90vw;text-align:center}
 #toast.on{transform:translate(-50%,0)}
 #toast.pr{background:var(--accent)}
+.grow{flex:1;min-width:0}
+.hero-big{padding:20px}
+.hero-big h1{font-size:30px;margin:2px 0}
+.btn.xl{min-height:64px;font-size:20px;border-radius:18px}
+.focus{background:var(--surface);border-radius:20px;padding:20px 16px;text-align:center}
+.focus h1{font-size:26px}
+.stepper{display:grid;grid-template-columns:68px minmax(0,1fr) 68px;gap:10px;align-items:center;margin-top:14px}
+.btn.sm{white-space:nowrap}
+.wk-head h2{font-size:18px}
+.stepper button{height:68px;border-radius:16px;background:var(--surface2);font-family:var(--head);font-size:30px;font-weight:600}
+.stepper button:active{background:var(--line)}
+.stepper .val{display:flex;align-items:baseline;justify-content:center;gap:6px;min-width:0}
+.stepper input{width:100%;min-width:0;max-width:140px;background:none;border:0;text-align:center;font-family:var(--head);font-size:46px;font-weight:700;color:var(--text);padding:0}
+.stepper input:focus{outline:none;color:var(--accent)}
+.stepper .u{color:var(--muted);font-size:15px}
+.btn.done{min-height:78px;font-size:22px;border-radius:20px;margin-top:20px}
+.pbar{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:10px}
+.pbar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.next-item{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:52px;padding:0 4px;border-bottom:1px solid var(--line);text-align:left}
+#rest .lbl,#rest .nx{display:none}
+#rest .rb{display:flex;gap:6px}
+#rest.full{inset:0;transform:none;border-radius:0;flex-direction:column;justify-content:center;gap:20px;background:rgba(11,13,16,.97);color:var(--text);padding:24px;box-shadow:none;text-align:center}
+#rest.full .lbl,#rest.full .nx{display:block}
+#rest.full .t{font-size:100px;color:var(--hot);min-width:0}
+#rest.full button{height:60px;min-width:84px;font-size:18px;background:var(--surface2);color:var(--text)}
+#rest.full button.skip{background:var(--accent);color:var(--accent-ink)}
 .recov{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .rc{background:var(--surface);border-radius:12px;padding:10px 12px;font-size:14px}
 .bar{height:6px;border-radius:3px;background:var(--surface2);margin-top:8px;overflow:hidden}
@@ -137,7 +163,7 @@ select:focus,.input:focus{outline:none;border-color:var(--accent)}
 <body>
 <main class="wrap" id="view"></main>
 
-<div id="rest"><span class="t" id="restT">1:30</span><button data-a="restAdd" data-s="-15">−15</button><button data-a="restAdd" data-s="15">+15</button><button data-a="restStop">ข้าม</button></div>
+<div id="rest"><div class="lbl muted">พักก่อน หายใจลึกๆ</div><span class="t" id="restT">1:30</span><div class="nx" id="restNext"></div><div class="rb"><button data-a="restAdd" data-s="-15">−15</button><button data-a="restAdd" data-s="15">+15</button><button class="skip" data-a="restStop">ข้าม</button></div></div>
 
 <nav class="nav"><div class="in">
   <button data-a="go" data-tab="home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>หน้าแรก</button>
@@ -181,8 +207,20 @@ function seed() {
     version: 1, exercises, templates: [push, pull, legs],
     schedule: [push.id, pull.id, legs.id, null, push.id, pull.id, null],
     workouts: [], bodyweight: [], active: null, lastBackup: null,
+    planMode: 'rotation', goal: 4,
   };
 }
+// ชื่อท่าภาษาไทย (ใช้กับข้อมูลเก่าได้ด้วย เพราะจับคู่จากชื่อ)
+const TH = {
+  'Bench Press': 'นอนดันบาร์', 'Incline Dumbbell Press': 'ดันดัมเบลบนม้านั่งเอียง', 'Chest Fly (เครื่อง)': 'เครื่องหนีบอก', 'Push-up': 'วิดพื้น',
+  'Lat Pulldown': 'ดึงบาร์ลงหน้าอก', 'Seated Cable Row': 'นั่งดึงเคเบิลเข้าลำตัว', 'Deadlift': 'ยกบาร์จากพื้น', 'Pull-up': 'โหนบาร์ดึงข้อ', 'Bent-over Row': 'ก้มตัวดึงบาร์',
+  'Squat': 'สควอทแบกบาร์', 'Leg Press': 'เครื่องถีบขา', 'Romanian Deadlift': 'ก้มยกบาร์ขาเกือบตึง', 'Leg Extension': 'เครื่องเตะขา', 'Leg Curl': 'เครื่องพับขา', 'Calf Raise': 'เขย่งน่อง',
+  'Overhead Press': 'ยืนดันบาร์เหนือหัว', 'Lateral Raise': 'ยกดัมเบลออกด้านข้าง', 'Face Pull': 'ดึงเชือกเข้าหาหน้า',
+  'Barbell Curl': 'ม้วนบาร์ (หน้าแขน)', 'Hammer Curl': 'ม้วนดัมเบลแบบค้อน', 'Triceps Pushdown': 'กดเคเบิลลง (หลังแขน)', 'Skull Crusher': 'นอนงอศอกบาร์ (หลังแขน)',
+  'Plank': 'แพลงก์', 'Cable Crunch': 'คุกเข่าครันช์เคเบิล', 'Hanging Leg Raise': 'โหนบาร์ยกขา',
+};
+const th = name => TH[name] || '';
+const howto = name => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(name + ' วิธีเล่น ท่าที่ถูกต้อง');
 function load() {
   try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.version) return d; } catch (e) {}
   return seed();
@@ -191,7 +229,9 @@ function save() {
   try { localStorage.setItem(KEY, JSON.stringify(S)); }
   catch (e) { toast('บันทึกไม่สำเร็จ — พื้นที่เครื่องอาจเต็ม'); }
 }
-let S = load(); save();
+let S = load();
+if (!S.planMode) S.planMode = 'rotation';
+save();
 // ขอให้เบราว์เซอร์ "ห้ามลบ" ข้อมูลนี้เอง แม้เครื่องจะพื้นที่น้อย
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
 
@@ -238,6 +278,40 @@ function recovery() {
   S.workouts.forEach(w => w.items.forEach(it => { const m = ex(it.exerciseId).muscle; if (m) last[m] = Math.max(last[m] || 0, new Date(w.date).getTime() + w.duration * 1000); }));
   return MUSCLES.map(m => ({ m, pct: last[m] ? Math.min(100, Math.round((Date.now() - last[m]) / 36e5 / 72 * 100)) : 100 }));
 }
+// โปรแกรมถัดไป: แบบวนตามลำดับ (ไม่ผูกกับวัน) หรือแบบตามวันในสัปดาห์
+function nextTpl() {
+  if (!S.templates.length) return null;
+  if (S.planMode === 'weekly') return tpl(S.schedule[dayIdx(new Date())]) || null;
+  for (let i = S.workouts.length - 1; i >= 0; i--) {
+    const w = S.workouts[i], idx = S.templates.findIndex(t => t.id === w.tid || t.name === w.name);
+    if (idx >= 0) return S.templates[(idx + 1) % S.templates.length];
+  }
+  return S.templates[0];
+}
+// เตรียมเซ็ตของท่าให้พร้อม: ใส่น้ำหนักที่แนะนำ และเป้าจำนวนครั้ง (+1 จากครั้งก่อน) ให้อัตโนมัติ
+function newItem(id) {
+  const prev = lastSets(id), sg = suggest(id);
+  if (!prev) return { exerciseId: id, sets: [0, 1, 2].map(() => ({ w: '', r: '10', done: false })) };
+  const bump = !!(sg && sg.w);
+  return { exerciseId: id, bump, sets: prev.map(s => ({
+    w: String(bump ? sg.w : s.w),
+    r: String(bump ? 8 : num(s.w) > 0 ? Math.min(REP_TOP, num(s.r) + 1) : num(s.r) + 1), done: false })) };
+}
+// เซ็ตถัดไปที่ต้องเล่น
+let wkView = 'focus', focusIi = null;
+function cursor() {
+  const A = S.active; if (!A) return null;
+  if (focusIi !== null && A.items[focusIi]) { const si = A.items[focusIi].sets.findIndex(s => !s.done); if (si >= 0) return { ii: focusIi, si }; }
+  focusIi = null;
+  for (let ii = 0; ii < A.items.length; ii++) { const si = A.items[ii].sets.findIndex(s => !s.done); if (si >= 0) return { ii, si }; }
+  return null;
+}
+// กันจอดับระหว่างเล่น
+let wakeLock = null;
+async function wakeOn() {
+  try { if (S.active && 'wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); } } catch (e) {}
+}
+function wakeOff() { if (wakeLock) { wakeLock.release(); wakeLock = null; } }
 // จานน้ำหนักข้างละกี่แผ่น
 const PLATES = [25, 20, 15, 10, 5, 2.5, 1.25];
 function plates(target, bar) {
@@ -302,19 +376,24 @@ function Home() {
   const greet = hr < 12 ? 'อรุณสวัสดิ์' : hr < 17 ? 'สวัสดีตอนบ่าย' : 'สวัสดีตอนเย็น';
   const weekW = S.workouts.filter(w => new Date(w.date) >= ws);
   const doneDays = new Set(weekW.map(w => dayIdx(w.date)));
-  const planned = S.schedule.filter(Boolean).length;
+  const weekly = S.planMode === 'weekly';
+  const planned = weekly ? S.schedule.filter(Boolean).length : (S.goal || 4);
   const bw = S.bodyweight[S.bodyweight.length - 1];
-  const t = tpl(S.schedule[di]);
+  const t = nextTpl();
+  const doneToday = S.workouts.some(w => ymd(w.date) === ymd(now));
   const needBackup = S.workouts.length >= 3 && (!S.lastBackup || Date.now() - S.lastBackup > 7 * 864e5);
 
   let today;
   if (S.active) {
-    today = `<div class="card hero stack"><div class="muted small">กำลังเล่นค้างอยู่</div><h2>${esc(S.active.name)}</h2>
-      <button class="btn primary" data-a="go" data-tab="workout">กลับไปเล่นต่อ</button></div>`;
+    const tot = S.active.items.reduce((a, it) => a + it.sets.length, 0), dn = S.active.items.reduce((a, it) => a + it.sets.filter(s => s.done).length, 0);
+    today = `<div class="card hero hero-big stack"><div class="muted small">กำลังเล่นค้างอยู่ · ${dn}/${tot} เซ็ต</div><h1>${esc(S.active.name)}</h1>
+      <button class="btn primary xl" data-a="go" data-tab="workout">เล่นต่อ</button></div>`;
   } else if (t) {
-    today = `<div class="card hero stack"><div class="muted small">โปรแกรมวันนี้</div><h2>${esc(t.name)}</h2>
-      <div>${t.exerciseIds.map(id => `<span class="chip">${esc(ex(id).name)}</span>`).join('')}</div>
-      <button class="btn primary" data-a="start" data-t="${t.id}">เริ่มเล่นเลย</button></div>`;
+    const sets = t.exerciseIds.reduce((a, id) => a + (lastSets(id) || [1, 2, 3]).length, 0);
+    today = `<div class="card hero hero-big stack"><div class="muted small">${doneToday ? 'วันนี้เล่นไปแล้ว 💪 ถ้ายังไหว ครั้งต่อไปคือ' : weekly ? 'โปรแกรมวันนี้' : 'ครั้งต่อไป'}</div><h1>${esc(t.name)}</h1>
+      <div class="muted small">${t.exerciseIds.length} ท่า · ${sets} เซ็ต · ประมาณ ${Math.max(10, Math.round(sets * 2.5 / 5) * 5)} นาที</div>
+      <button class="btn primary xl" data-a="start" data-t="${t.id}">เริ่มเลย</button>
+      <button class="link" style="text-align:center;color:var(--muted)" data-a="go" data-tab="workout">เลือกโปรแกรมอื่น</button></div>`;
   } else {
     today = `<div class="card stack"><div class="muted small">วันนี้</div><h2>วันพักกล้ามเนื้อ</h2>
       <p class="muted small" style="margin:0">การพักคือส่วนหนึ่งของการสร้างกล้าม แต่ถ้าอยากเล่นก็ได้นะ</p>
@@ -325,9 +404,9 @@ function Home() {
   return `
   <div class="row between"><div><div class="muted small">${fmtLong(now)}</div><h1>${greet}</h1></div>
     <button class="icon-btn" data-a="settings" aria-label="ตั้งค่าและสำรองข้อมูล">${I.gear}</button></div>
-  <div class="week">${DAYS_SHORT.map((d, i) => `<div class="day ${doneDays.has(i) ? 'done' : ''} ${i === di ? 'today' : ''} ${S.schedule[i] ? 'plan' : ''}"><i>${doneDays.has(i) ? I.check : ''}</i>${d}</div>`).join('')}</div>
+  <div class="section" style="margin-top:20px">${today}</div>
+  <div class="week">${DAYS_SHORT.map((d, i) => `<div class="day ${doneDays.has(i) ? 'done' : ''} ${i === di ? 'today' : ''} ${weekly && S.schedule[i] ? 'plan' : ''}"><i>${doneDays.has(i) ? I.check : ''}</i>${d}</div>`).join('')}</div>
   ${needBackup ? `<div class="warn section" data-a="settings">ไม่ได้สำรองข้อมูลมาเกิน 7 วันแล้ว — แตะเพื่อสำรองเก็บไว้ (ใช้เวลา 5 วินาที)</div>` : ''}
-  <div class="section">${today}</div>
   <div class="section"><div class="section-title"><h2>ความพร้อมของกล้ามเนื้อ</h2><span class="muted small">พักครบ 72 ชม. = พร้อม</span></div>
     <div class="recov">${recovery().map(({ m, pct }) => `<div class="rc"><div class="row between"><span>${m}</span><span class="num small" style="color:${pct >= 100 ? 'var(--accent)' : pct >= 50 ? '#FFD23F' : 'var(--hot)'}">${pct >= 100 ? 'พร้อม' : pct + '%'}</span></div>
       <div class="bar"><i style="width:${pct}%;background:${pct >= 100 ? 'var(--accent)' : pct >= 50 ? '#FFD23F' : 'var(--hot)'}"></i></div></div>`).join('')}</div></div>
@@ -343,25 +422,52 @@ function Home() {
       : `<div class="empty">ยังไม่มีประวัติ — เล่นครั้งแรกแล้วจะขึ้นตรงนี้</div>`}</div></div>`;
 }
 
+function Focus() {
+  const A = S.active, c = cursor();
+  const total = A.items.reduce((a, it) => a + it.sets.length, 0), done = A.items.reduce((a, it) => a + it.sets.filter(s => s.done).length, 0);
+  const head = `<div class="wk-head"><div class="row between"><div><h2>${esc(A.name)}</h2><div class="timer" id="elapsed">${mmss(Math.floor((Date.now() - A.start) / 1000))}</div></div>
+      <div class="row" style="gap:8px"><button class="btn ghost sm" data-a="wkView" data-v="list">ดูทั้งหมด</button><button class="btn ghost sm" data-a="finish">จบ</button></div></div>
+    <div class="pbar"><i style="width:${total ? done / total * 100 : 0}%"></i></div></div>`;
+  if (!c) return head + `<div class="focus stack"><h1>ครบทุกเซ็ตแล้ว 🎉</h1><p class="muted" style="margin:0">กดจบเพื่อบันทึก หรือเพิ่มท่าถ้ายังไหว</p>
+    <button class="btn primary xl" data-a="finish">จบและบันทึก</button><button class="btn ghost" data-a="pickEx" data-for="active">${I.plus} เพิ่มท่า</button></div>`;
+  const it = A.items[c.ii], s = it.sets[c.si], e = ex(it.exerciseId), prev = (lastSets(it.exerciseId) || [])[c.si];
+  const upcoming = A.items.map((x, i) => ({ x, i })).filter(({ x, i }) => i !== c.ii && x.sets.some(q => !q.done));
+  return head + `<div class="focus">
+    <div class="muted small">ท่าที่ ${c.ii + 1}/${A.items.length} · <b style="color:var(--text)">เซ็ต ${c.si + 1} จาก ${it.sets.length}</b></div>
+    <h1 style="margin-top:6px">${esc(e.name)}</h1>
+    <div class="muted small">${th(e.name) ? esc(th(e.name)) + ' · ' : ''}${esc(e.muscle)} · <a href="${howto(e.name)}" target="_blank" rel="noopener" style="color:var(--accent)">ดูวิธีเล่น ▶</a></div>
+    ${it.bump ? `<div class="chip acc" style="margin:10px 0 0">⬆ เพิ่มน้ำหนักให้แล้ว เพราะครั้งก่อนทำได้ครบ</div>` : ''}
+    <div class="muted small" style="margin-top:10px">ครั้งก่อน: ${prev ? `${prev.w} kg × ${prev.r} ครั้ง` : 'ยังไม่เคยเล่น ลองน้ำหนักเบาๆ ก่อน'}</div>
+    <div class="stepper"><button data-a="step" data-f="w" data-d="-2.5" aria-label="ลดน้ำหนัก">−</button><div class="val"><input inputmode="decimal" data-ff="w" value="${esc(s.w)}" placeholder="0"><span class="u">kg</span></div><button data-a="step" data-f="w" data-d="2.5" aria-label="เพิ่มน้ำหนัก">+</button></div>
+    <div class="stepper"><button data-a="step" data-f="r" data-d="-1" aria-label="ลดจำนวนครั้ง">−</button><div class="val"><input inputmode="numeric" data-ff="r" value="${esc(s.r)}" placeholder="0"><span class="u">ครั้ง</span></div><button data-a="step" data-f="r" data-d="1" aria-label="เพิ่มจำนวนครั้ง">+</button></div>
+    <button class="btn primary done" data-a="doneSet">${I.check} เสร็จเซ็ตนี้</button>
+    <div class="row between" style="margin-top:6px"><button class="link" data-a="addSetF">+ เพิ่มเซ็ต</button><button class="link" style="color:var(--muted)" data-a="plateCalc">คำนวณจาน</button><button class="link" style="color:var(--muted)" data-a="skipEx">ข้ามท่านี้ ›</button></div>
+  </div>
+  ${upcoming.length ? `<div class="section"><div class="muted small" style="margin-bottom:4px">ต่อไป · แตะเพื่อสลับไปเล่นก่อน (เช่น เครื่องไม่ว่าง)</div>${upcoming.map(({ x, i }) => `<button class="next-item" data-a="jump" data-i="${i}"><span>${esc(ex(x.exerciseId).name)}</span><span class="muted small num">${x.sets.filter(q => q.done).length}/${x.sets.length} เซ็ต</span></button>`).join('')}</div>` : ''}
+  <button class="link section" style="color:var(--muted);display:block;margin:20px auto 0" data-a="pickEx" data-for="active">+ เพิ่มท่า</button>`;
+}
+
 function Workout() {
+  if (S.active && wkView === 'focus') return Focus();
   if (!S.active) {
+    const nt = nextTpl();
     return `<h1>เริ่มเล่น</h1><p class="muted">เลือกโปรแกรม หรือจะเริ่มจากหน้าว่างแล้วเพิ่มท่าเองก็ได้</p>
       <div class="stack section">${S.templates.map(t => `
-        <button class="card" style="text-align:left;width:100%" data-a="start" data-t="${t.id}">
-          <div class="row between"><h3>${esc(t.name)}</h3><span class="chip acc">${t.exerciseIds.length} ท่า</span></div>
+        <button class="card" style="text-align:left;width:100%${nt && nt.id === t.id ? ';outline:2px solid var(--accent)' : ''}" data-a="start" data-t="${t.id}">
+          <div class="row between"><h3>${esc(t.name)}</h3><span class="chip acc" style="margin:0">${nt && nt.id === t.id ? 'ถัดไป' : t.exerciseIds.length + ' ท่า'}</span></div>
           <div class="muted small" style="margin-top:6px">${t.exerciseIds.map(id => esc(ex(id).name)).join(' · ')}</div></button>`).join('')}
         <button class="btn ghost" data-a="start" data-t="">${I.plus} เริ่มแบบว่าง</button></div>`;
   }
   const A = S.active;
   return `
   <div class="wk-head row between"><div><h2>${esc(A.name)}</h2><div class="timer" id="elapsed">${mmss(Math.floor((Date.now() - A.start) / 1000))}</div></div>
-    <div class="row" style="gap:8px"><button class="btn ghost sm" data-a="plateCalc">คำนวณจาน</button><button class="btn primary sm" data-a="finish">เสร็จแล้ว</button></div></div>
+    <div class="row" style="gap:8px"><button class="btn ghost sm" data-a="wkView" data-v="focus">ทีละเซ็ต</button><button class="btn primary sm" data-a="finish">เสร็จแล้ว</button></div></div>
   ${A.items.map((it, ii) => {
     const prev = lastSets(it.exerciseId) || [];
     return `<div class="ex-card">
-      <div class="row between"><div><h3>${esc(ex(it.exerciseId).name)}</h3><span class="tag">${esc(ex(it.exerciseId).muscle)}</span></div>
+      <div class="row between"><div><h3>${esc(ex(it.exerciseId).name)}</h3><span class="muted small">${esc(th(ex(it.exerciseId).name))}</span> <span class="tag">${esc(ex(it.exerciseId).muscle)}</span></div>
         <button class="icon-btn" style="background:none" data-a="rmItem" data-i="${ii}" aria-label="ลบท่า">${I.x}</button></div>
-      ${(sg => sg && !it.sets.some(s => s.done) ? `<div class="tip"><span>💡 ${sg.text}</span>${sg.w ? `<button data-a="applySug" data-i="${ii}" data-w="${sg.w}">ใช้เลย</button>` : ''}</div>` : '')(suggest(it.exerciseId))}
+      ${it.bump ? `<div class="tip"><span>⬆ เพิ่มน้ำหนักให้แล้ว เพราะครั้งก่อนทำได้ครบ</span></div>` : ''}
       <table class="sets"><tr><th>เซ็ต</th><th>ครั้งก่อน</th><th>kg</th><th>ครั้ง</th><th></th></tr>
       ${it.sets.map((s, si) => { const ph = prev[si] || (si > 0 ? it.sets[si - 1] : null) || {}; return `<tr class="${s.done ? 'done' : ''}">
         <td class="setn">${si + 1}</td>
@@ -433,19 +539,29 @@ function Progress() {
 }
 
 function Plan() {
+  const weekly = S.planMode === 'weekly', nt = nextTpl();
   return `<h1>โปรแกรม</h1>
-  <div class="section"><div class="section-title"><h2>ตารางรายสัปดาห์</h2></div>
+  <div class="section" style="margin-top:16px"><div class="seg"><button class="${!weekly ? 'on' : ''}" data-a="planMode" data-m="rotation">วนตามลำดับ</button><button class="${weekly ? 'on' : ''}" data-a="planMode" data-m="weekly">ตามวันในสัปดาห์</button></div>
+    <p class="muted small" style="margin:8px 2px 0">${weekly ? 'ผูกโปรแกรมกับวัน ถ้าวันไหนไม่ได้ไป โปรแกรมของวันนั้นจะถูกข้าม' : 'เล่นเรียงตามลำดับด้านล่างแล้ววนกลับ เว้นไปกี่วันก็ได้ แอปจำเองว่าครั้งต่อไปคืออะไร (แนะนำ)'}</p></div>
+  ${weekly ? `<div class="section"><div class="section-title"><h2>ตารางรายสัปดาห์</h2></div>
     <div class="card" style="padding:4px 16px">${DAYS.map((d, i) => `
       <div class="item"><div style="width:84px" class="${i === dayIdx(new Date()) ? '' : 'muted'}">${d}</div>
       <select data-a="setDay" data-d="${i}" style="height:44px">
         <option value="">— วันพัก —</option>
         ${S.templates.map(t => `<option value="${t.id}" ${S.schedule[i] === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}
-      </select></div>`).join('')}</div></div>
-  <div class="section"><div class="section-title"><h2>ชุดท่าของฉัน</h2><button class="link" data-a="newTpl">+ สร้างใหม่</button></div>
-    <div class="stack">${S.templates.map(t => `
-      <button class="card" style="text-align:left;width:100%" data-a="editTpl" data-t="${t.id}">
-        <div class="row between"><h3>${esc(t.name)}</h3><span class="muted small">แก้ไข ›</span></div>
-        <div class="muted small" style="margin-top:6px">${t.exerciseIds.map(id => esc(ex(id).name)).join(' · ') || 'ยังไม่มีท่า'}</div></button>`).join('')}</div></div>`;
+      </select></div>`).join('')}</div></div>`
+  : `<div class="card section row between"><span>เป้าหมายต่อสัปดาห์</span><select id="goalSel" style="width:120px;height:44px">${[2, 3, 4, 5, 6].map(n => `<option value="${n}" ${(S.goal || 4) === n ? 'selected' : ''}>${n} วัน</option>`).join('')}</select></div>`}
+  <div class="section"><div class="section-title"><h2>${weekly ? 'ชุดท่าของฉัน' : 'ลำดับการเล่น'}</h2><button class="link" data-a="newTpl">+ สร้างใหม่</button></div>
+    <div class="stack">${S.templates.map((t, i) => `
+      <div class="card row" style="gap:10px;padding:12px 12px 12px 16px">
+        ${!weekly ? `<div class="num" style="width:18px;color:var(--muted)">${i + 1}</div>` : ''}
+        <button class="grow" style="text-align:left" data-a="editTpl" data-t="${t.id}">
+          <div class="row" style="gap:8px;flex-wrap:wrap"><h3>${esc(t.name)}</h3>${!weekly && nt && nt.id === t.id ? '<span class="chip acc" style="margin:0">ถัดไป</span>' : ''}</div>
+          <div class="muted small" style="margin-top:4px">${t.exerciseIds.map(id => esc(ex(id).name)).join(' · ') || 'ยังไม่มีท่า'}</div>
+          <div class="small" style="color:var(--accent);margin-top:4px">แตะเพื่อแก้ไข</div></button>
+        ${!weekly ? `<div style="display:flex;flex-direction:column;gap:4px"><button class="icon-btn" style="width:40px;height:36px;background:var(--surface2)" data-a="tplOrder" data-i="${i}" data-d="-1" aria-label="เลื่อนขึ้น">${I.up}</button><button class="icon-btn" style="width:40px;height:36px;background:var(--surface2)" data-a="tplOrder" data-i="${i}" data-d="1" aria-label="เลื่อนลง">${I.down}</button></div>` : ''}
+      </div>`).join('')}</div>
+    ${!weekly && S.templates.length ? `<p class="muted small" style="text-align:center">เล่นจบอันสุดท้ายแล้ว วนกลับไปเริ่มที่อันแรก ↺</p>` : ''}</div>`;
 }
 
 function render() {
@@ -465,10 +581,10 @@ function closeSheet() { $('#sheet').classList.remove('on'); $('#scrim').classLis
 
 function exercisePicker(q = '') {
   const ql = q.trim().toLowerCase();
-  const groups = MUSCLES.map(m => [m, S.exercises.filter(e => e.muscle === m && e.name.toLowerCase().includes(ql))]).filter(g => g[1].length);
+  const groups = MUSCLES.map(m => [m, S.exercises.filter(e => e.muscle === m && (e.name.toLowerCase().includes(ql) || th(e.name).includes(ql)))]).filter(g => g[1].length);
   return `<h2>เลือกท่า</h2>
     <input class="input section" style="margin-top:14px" id="exSearch" placeholder="ค้นหาท่า..." value="${esc(q)}">
-    <div id="exList">${groups.map(([m, list]) => `<div class="muscle-h">${m}</div>${list.map(e => `<button class="pick" data-a="pickedEx" data-id="${e.id}">${esc(e.name)}<span style="color:var(--accent)">${I.plus}</span></button>`).join('')}`).join('') || '<div class="empty">ไม่พบท่านี้ — สร้างใหม่ด้านล่างได้เลย</div>'}</div>
+    <div id="exList">${groups.map(([m, list]) => `<div class="muscle-h">${m}</div>${list.map(e => `<button class="pick" data-a="pickedEx" data-id="${e.id}"><span>${esc(e.name)}${th(e.name) ? `<br><span class="muted small">${esc(th(e.name))}</span>` : ''}</span><span style="color:var(--accent)">${I.plus}</span></button>`).join('')}`).join('') || '<div class="empty">ไม่พบท่านี้ — สร้างใหม่ด้านล่างได้เลย</div>'}</div>
     <div class="card section stack" style="background:var(--surface2)"><h3>สร้างท่าใหม่</h3>
       <input class="input" id="newExName" placeholder="ชื่อท่า" value="${esc(q)}" style="background:var(--surface)">
       <select id="newExMuscle" style="background:var(--surface)">${MUSCLES.map(m => `<option>${m}</option>`).join('')}</select>
@@ -523,6 +639,10 @@ function beep() {
 function tick() {
   const el = $('#elapsed'); if (el && S.active) el.textContent = mmss(Math.floor((Date.now() - S.active.start) / 1000));
   const r = $('#rest');
+  // โหมดทีละเซ็ต: เวลาพักขึ้นเต็มจอ พร้อมบอกเซ็ตต่อไป
+  r.classList.toggle('full', !!(S.active && tab === 'workout' && wkView === 'focus'));
+  const c = restEnd && cursor();
+  if (c) { const it = S.active.items[c.ii], s = it.sets[c.si]; $('#restNext').innerHTML = `<div class="muted small">ต่อไป</div><h2>${esc(ex(it.exerciseId).name)} · เซ็ต ${c.si + 1}</h2><div class="num" style="font-size:22px;margin-top:4px">${s.w || 0} kg × ${s.r} ครั้ง</div>`; }
   if (restEnd) {
     const left = Math.ceil((restEnd - Date.now()) / 1000);
     if (left <= 0) { restEnd = 0; r.classList.remove('on'); if (navigator.vibrate) navigator.vibrate([300, 120, 300]); beep(); toast('หมดเวลาพัก — ลุยเซ็ตต่อไป!'); }
@@ -543,40 +663,49 @@ const A = {
   start: el => {
     if (S.active && !confirm('มีการเล่นค้างอยู่ จะเริ่มใหม่และทิ้งอันเดิมไหม?')) return;
     const t = tpl(el.dataset.t);
-    S.active = {
-      name: t ? t.name : 'เล่นอิสระ', start: Date.now(),
-      items: (t ? t.exerciseIds : []).map(id => {
-        const prev = lastSets(id);
-        return { exerciseId: id, sets: (prev || [{}, {}, {}]).map(() => ({ w: '', r: '', done: false })) };
-      }),
-    };
-    save(); tab = 'workout'; render(); scrollTo(0, 0);
+    S.active = { tid: t ? t.id : null, name: t ? t.name : 'เล่นอิสระ', start: Date.now(), items: (t ? t.exerciseIds : []).map(newItem) };
+    focusIi = null; wkView = 'focus'; restEnd = 0;
+    save(); closeSheet(); tab = 'workout'; render(); scrollTo(0, 0); wakeOn();
+    if (!S.active.items.length) A.pickEx({ dataset: { for: 'active' } });
   },
   toggleSet: el => {
-    const it = S.active.items[el.dataset.i], s = it.sets[el.dataset.s];
-    if (!s.done) {
-      const prev = (lastSets(it.exerciseId) || [])[el.dataset.s] || it.sets[el.dataset.s - 1];
-      if (s.w === '' && prev) s.w = prev.w;
-      if (s.r === '' && prev) s.r = prev.r;
-      if (s.w === '' || s.r === '') { toast('ใส่น้ำหนักกับจำนวนครั้งก่อนนะ'); return; }
-      s.done = true; startRest();
-    } else s.done = false;
-    save(); render();
+    const s = S.active.items[el.dataset.i].sets[el.dataset.s];
+    if (!s.done) completeSet(+el.dataset.i, +el.dataset.s, false);
+    else { s.done = false; save(); render(); }
   },
+  step: el => {
+    const c = cursor(); if (!c) return;
+    const s = S.active.items[c.ii].sets[c.si], f = el.dataset.f;
+    s[f] = String(+Math.max(0, num(s[f]) + num(el.dataset.d)).toFixed(2)); save();
+    const inp = document.querySelector(`[data-ff="${f}"]`); if (inp) inp.value = s[f];
+  },
+  doneSet: () => { const c = cursor(); if (c) completeSet(c.ii, c.si, true); },
+  addSetF: () => { const c = cursor(); if (!c) return; const it = S.active.items[c.ii], l = it.sets[it.sets.length - 1]; it.sets.push({ w: l.w, r: l.r, done: false }); save(); render(); toast('เพิ่มเซ็ตแล้ว'); },
+  skipEx: () => {
+    const c = cursor(); if (!c) return;
+    const it = S.active.items[c.ii]; it.sets = it.sets.filter(s => s.done);
+    if (!it.sets.length) S.active.items.splice(c.ii, 1);
+    focusIi = null; save(); render(); if (!cursor()) askFinish();
+  },
+  jump: el => { focusIi = +el.dataset.i; render(); scrollTo(0, 0); },
+  wkView: el => { wkView = el.dataset.v; render(); tick(); scrollTo(0, 0); },
+  planMode: el => { S.planMode = el.dataset.m; save(); render(); },
+  tplOrder: el => { const i = +el.dataset.i, j = i + +el.dataset.d; if (j < 0 || j >= S.templates.length) return; [S.templates[i], S.templates[j]] = [S.templates[j], S.templates[i]]; save(); render(); },
   addSet: el => { const it = S.active.items[el.dataset.i], l = it.sets[it.sets.length - 1]; it.sets.push({ w: l ? l.w : '', r: l ? l.r : '', done: false }); save(); render(); },
   rmSet: el => { S.active.items[el.dataset.i].sets.pop(); save(); render(); },
   rmItem: el => { if (!confirm('ลบท่านี้ออกจากการเล่นครั้งนี้?')) return; S.active.items.splice(el.dataset.i, 1); save(); render(); },
-  cancelWorkout: () => { if (!confirm('ยกเลิกและไม่บันทึกการเล่นครั้งนี้?')) return; S.active = null; restEnd = 0; save(); tab = 'home'; render(); },
+  cancelWorkout: () => { if (!confirm('ยกเลิกและไม่บันทึกการเล่นครั้งนี้?')) return; S.active = null; restEnd = 0; wakeOff(); save(); tab = 'home'; render(); },
   finish: () => {
     const a = S.active;
     const items = a.items.map(it => ({ exerciseId: it.exerciseId, sets: it.sets.filter(s => s.done).map(s => ({ w: num(s.w), r: num(s.r) })) })).filter(it => it.sets.length);
-    if (!items.length) { if (confirm('ยังไม่ได้กด ✓ สักเซ็ต — ยกเลิกการเล่นครั้งนี้เลยไหม?')) { S.active = null; save(); tab = 'home'; render(); } return; }
+    if (!items.length) { if (confirm('ยังไม่ได้กด ✓ สักเซ็ต — ยกเลิกการเล่นครั้งนี้เลยไหม?')) { S.active = null; restEnd = 0; wakeOff(); save(); closeSheet(); tab = 'home'; render(); } return; }
     const prs = items.filter(it => { const before = bestWeight(it.exerciseId); const now = Math.max(...it.sets.map(s => s.w)); return before > 0 && now > before; })
       .map(it => `${ex(it.exerciseId).name} ${Math.max(...it.sets.map(s => s.w))} kg`);
     const prevSame = [...S.workouts].reverse().find(w => w.name === a.name);
-    const w = { id: uid(), name: a.name, date: new Date(a.start).toISOString(), duration: Math.floor((Date.now() - a.start) / 1000), items };
+    const w = { id: uid(), tid: a.tid || null, name: a.name, date: new Date(a.start).toISOString(), duration: Math.floor((Date.now() - a.start) / 1000), items };
     S.workouts.push(w);
-    S.active = null; restEnd = 0; save(); tab = 'home'; render(); scrollTo(0, 0);
+    S.active = null; restEnd = 0; wakeOff(); save(); tab = 'home'; render(); scrollTo(0, 0);
+    const needBackup = !S.lastBackup || Date.now() - S.lastBackup > 7 * 864e5;
     // หน้าสรุปหลังเล่น (แบบ Hevy/Strong)
     const vol = volume(w), pv = prevSame ? volume(prevSame) : 0, ch = pv ? Math.round((vol - pv) / pv * 100) : null;
     openSheet(`<div style="text-align:center"><div class="muted small">เล่นเสร็จแล้ว · ครั้งที่ ${S.workouts.length}</div><h1 style="margin:4px 0 2px">เยี่ยมมาก!</h1><div class="muted">${esc(w.name)}</div></div>
@@ -586,6 +715,7 @@ const A = {
         <div class="stat"><div class="v">${kfmt(vol)}</div><div class="l">kg รวม${ch !== null ? ` <span style="color:${ch >= 0 ? 'var(--accent)' : 'var(--hot)'}">${ch >= 0 ? '+' : ''}${ch}%</span>` : ''}</div></div></div>
       ${prs.length ? `<div class="card section" style="background:rgba(198,255,61,.08);border:1px solid #3A4A12"><h3 style="color:var(--accent)">🏆 สถิติใหม่ ${prs.length} ท่า</h3>${prs.map(p => `<div style="margin-top:6px">${esc(p)}</div>`).join('')}</div>` : ''}
       ${ch !== null ? `<p class="muted small" style="text-align:center">${ch >= 0 ? 'ยกรวมได้มากกว่า' : 'ยกรวมได้น้อยกว่า'}ครั้งก่อนของโปรแกรมนี้ ${Math.abs(ch)}%</p>` : ''}
+      ${needBackup ? `<button class="btn ghost section" data-a="exportData">สำรองข้อมูลตอนนี้ (5 วินาที)</button>` : ''}
       <button class="btn primary section" data-a="closeSheet">ปิด</button>`);
   },
   applySug: el => { S.active.items[el.dataset.i].sets.forEach(s => { if (!s.done) { s.w = el.dataset.w; s.r = '8'; } }); save(); render(); toast('ตั้งน้ำหนักใหม่แล้ว สู้ๆ!'); },
@@ -594,6 +724,7 @@ const A = {
       <div class="row"><input class="input num" id="pcW" inputmode="decimal" placeholder="เช่น 60" style="font-size:20px">
       <select id="pcBar" style="width:150px"><option value="20">บาร์ 20 kg</option><option value="15">บาร์ 15 kg</option><option value="10">บาร์ 10 kg</option><option value="0">ไม่มีบาร์</option></select></div>
       <div id="pcOut" class="section"></div>`);
+    const c = cursor(); if (c) { $('#pcW').value = S.active.items[c.ii].sets[c.si].w; drawPlates(); }
   },
   restAdd: el => { restEnd += num(el.dataset.s) * 1000; tick(); },
   restStop: () => { restEnd = 0; tick(); },
@@ -652,15 +783,33 @@ function drawPlates() {
     <div class="num" style="font-size:18px">${r.out.join(' + ') || '–'}</div>
     ${r.rest ? `<div class="small" style="color:var(--hot);margin-top:6px">จานไม่พอดี ขาดไป ${r.rest} kg</div>` : ''}</div>`;
 }
+function completeSet(ii, si, follow) {
+  const it = S.active.items[ii], s = it.sets[si];
+  if (num(s.r) <= 0) { toast('ใส่จำนวนครั้งก่อนนะ'); return; }
+  if (s.w === '') s.w = '0';
+  s.done = true;
+  // โหมดทีละเซ็ต: ถ้าเปลี่ยนน้ำหนัก เซ็ตที่เหลือของท่านี้ใช้น้ำหนักตามไปด้วย
+  if (follow) it.sets.forEach(x => { if (!x.done) x.w = s.w; });
+  if (navigator.vibrate) navigator.vibrate(40);
+  save(); render();
+  if (cursor()) startRest(); else { restEnd = 0; tick(); askFinish(); }
+}
+function askFinish() {
+  openSheet(`<div style="text-align:center"><h1>ครบทุกเซ็ตแล้ว 🎉</h1><p class="muted">จบและบันทึกการเล่นครั้งนี้เลยไหม?</p></div>
+    <div class="stack"><button class="btn primary xl" data-a="finish">จบและบันทึก</button>
+    <button class="btn ghost" data-a="pickEx" data-for="active">ยังไหว เพิ่มท่า</button>
+    <button class="link" style="color:var(--muted);display:block;margin:0 auto" data-a="closeSheet">ยังก่อน</button></div>`);
+}
 function addPicked(id) {
-  if (sheetFor === 'active') { const prev = lastSets(id); S.active.items.push({ exerciseId: id, sets: (prev || [{}, {}, {}]).map(() => ({ w: '', r: '', done: false })) }); save(); closeSheet(); render(); }
+  if (sheetFor === 'active') { S.active.items.push(newItem(id)); focusIi = S.active.items.length - 1; save(); closeSheet(); render(); }
   else { const t = tpl(editing); t.exerciseIds.push(id); save(); openSheet(tplEditor(t)); render(); }
 }
 
 document.addEventListener('click', e => { const el = e.target.closest('[data-a]'); if (el && el.tagName !== 'SELECT' && A[el.dataset.a]) A[el.dataset.a](el); });
 document.addEventListener('input', e => {
   const el = e.target;
-  if (el.dataset.f && S.active) { S.active.items[el.dataset.i].sets[el.dataset.s][el.dataset.f] = el.value; save(); }
+  if (el.dataset.ff && S.active) { const c = cursor(); if (c) { S.active.items[c.ii].sets[c.si][el.dataset.ff] = el.value; save(); } }
+  if (el.dataset.f && el.dataset.i !== undefined && S.active) { S.active.items[el.dataset.i].sets[el.dataset.s][el.dataset.f] = el.value; save(); }
   if (el.id === 'exSearch') { const pos = el.selectionStart; openSheet(exercisePicker(el.value)); const n = $('#exSearch'); n.focus(); n.setSelectionRange(pos, pos); }
   if (el.id === 'tplName' && editing) { tpl(editing).name = el.value; save(); }
   if (el.id === 'pcW') drawPlates();
@@ -671,7 +820,9 @@ document.addEventListener('change', e => {
   if (el.dataset.a === 'progEx') { progEx = el.value; render(); }
   if (el.id === 'restSel') { S.restSec = +el.value; save(); toast('ตั้งเวลาพักเป็น ' + mmss(S.restSec) + ' นาที'); }
   if (el.id === 'pcBar') drawPlates();
+  if (el.id === 'goalSel') { S.goal = +el.value; save(); toast('ตั้งเป้า ' + S.goal + ' วันต่อสัปดาห์'); }
 });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { wakeOn(); tick(); } });
 $('#importFile').addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try {
@@ -683,7 +834,7 @@ $('#importFile').addEventListener('change', async e => {
 });
 
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js');
-render();
+render(); wakeOn();
 </script>
 </body>
 </html>
